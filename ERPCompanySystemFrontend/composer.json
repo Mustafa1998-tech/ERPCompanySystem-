@@ -1,0 +1,12 @@
+{
+    "name": "erpcompany/frontend",
+    "description": "Frontend PHP application for ERP Company System",
+    "require-dev": {
+        "phpunit/phpunit": "^10.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    }
+}
