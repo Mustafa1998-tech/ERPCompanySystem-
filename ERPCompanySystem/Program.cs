@@ -89,15 +89,22 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Configure database connection
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+// Configure database connection with connection pooling and retry logic
+builder.Services.AddDbContextPool<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
+        sqlServerOptions => sqlServerOptions
+            .EnableRetryOnFailure(maxRetryCount: 3, maxRetryDelay: TimeSpan.FromSeconds(5), errorNumbersToAdd: null)
+            .UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)
+            .EnableDetailedErrors(true)
+            .EnableSensitiveDataLogging(builder.Environment.IsDevelopment()))
+    .UseInternalServiceProvider(builder.Services.BuildServiceProvider()));
 
 // Add services to the container.
-builder.Services.AddScoped<AuthenticationService>();
-builder.Services.AddControllers();
+builder.Services.AddControllersWithViews();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
-// Configure JWT authentication
+// Add JWT Authentication
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -141,16 +148,21 @@ builder.Services.AddAuthorization(options =>
         policy.Requirements.Add(new CustomAuthorizeAttribute(true)));
     
     options.AddPolicy("RequireRefreshToken", policy => 
-        policy.Requirements.Add(new CustomAuthorizeAttribute(false, true)));
+        policy.Requirements.Add(new CustomAuthorizeAttribute(false)));
 });
 
 // Register authorization handlers
 builder.Services.AddSingleton<IAuthorizationHandler, RoleAuthorizationHandler>();
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore// Configure Swagger/OpenAPI
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore// Configure Swagger/OpenAPI with XML comments
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
+    // Add XML comments
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    options.IncludeXmlComments(xmlPath);
+
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token in the text input below.\n\nExample: \"Bearer 12345abcdef\"",
@@ -172,10 +184,9 @@ builder.Services.AddSwaggerGen(options =>
                     Id = "Bearer"
                 }
             },
-            Array.Empty<string>()
+            new string[] {}
         }
     });
-});
 
 var app = builder.Build();
 
@@ -185,6 +196,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(options =>
     {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "ERPCompanySystem API V1");
+        options.RoutePrefix = string.Empty;
         options.InjectStylesheet("/swagger-ui/custom.css");
         options.InjectJavascript("/swagger-ui/custom.js");
         options.OAuthClientId("swagger-ui");
@@ -245,7 +258,7 @@ app.UseMiddleware<IpBlockingMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Configure centralized error handling
+// Global error handling
 app.UseExceptionHandler(appError =>
 {
     appError.Run(async context =>
@@ -253,14 +266,15 @@ app.UseExceptionHandler(appError =>
         var error = context.Features.Get<IExceptionHandlerFeature>();
         if (error != null)
         {
+            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+            var activityContext = Activity.Current?.Id ?? context.TraceIdentifier;
             var statusCode = context.Response.StatusCode;
             var message = error.Error.Message;
-            var stackTrace = app.Environment.IsDevelopment() ? error.Error.StackTrace : null;
+            var stackTrace = builder.Environment.IsDevelopment() ? error.Error.StackTrace : null;
             var requestPath = context.Request.Path;
-            var requestId = activityContext?.Activity?.Id ?? context.TraceIdentifier;
 
             // Log the error
-            app.Logger.LogError(error.Error, "An unhandled exception occurred: {Message}", message);
+            logger.LogError(error.Error, "An unhandled exception occurred: {Message}", message);
 
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = statusCode;
@@ -269,15 +283,19 @@ app.UseExceptionHandler(appError =>
             {
                 error = true,
                 code = statusCode,
-                message = app.Environment.IsDevelopment() ? message : "Internal server error",
+                message = builder.Environment.IsDevelopment() ? message : "Internal server error",
                 stackTrace,
                 timestamp = DateTime.UtcNow,
                 path = requestPath,
-                requestId
+                requestId = activityContext
             });
         }
     });
 });
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.MapControllers();
 

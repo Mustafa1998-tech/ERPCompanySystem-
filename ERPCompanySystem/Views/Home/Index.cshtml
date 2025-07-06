@@ -1,0 +1,40 @@
+@{
+    ViewData["Title"] = "لوحة التحكم";
+}
+
+<div class="text-center">
+    <h1 class="display-4">ERP Company System</h1>
+    <p>نظام إدارة الشركات الشامل</p>
+
+    <div class="row mt-5">
+        <div class="col-md-4 mb-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">العملاء</h5>
+                    <p class="card-text">إدارة العملاء والعقود</p>
+                    <a asp-controller="Clients" asp-action="Index" class="btn btn-light">عرض العملاء</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">المبيعات</h5>
+                    <p class="card-text">إدارة المبيعات والطلبات</p>
+                    <a asp-controller="Sales" asp-action="Index" class="btn btn-light">عرض المبيعات</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">المشتريات</h5>
+                    <p class="card-text">إدارة المشتريات والمخزون</p>
+                    <a asp-controller="Purchases" asp-action="Index" class="btn btn-light">عرض المشتريات</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

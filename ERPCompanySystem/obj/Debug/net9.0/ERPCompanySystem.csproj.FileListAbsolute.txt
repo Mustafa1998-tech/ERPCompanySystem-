@@ -6,3 +6,5 @@ C:\Users\ahmed\Desktop\ERPCompanySystem\ERPCompanySystem\obj\Debug\net9.0\ERPCom
 C:\Users\ahmed\Desktop\ERPCompanySystem\ERPCompanySystem\obj\Debug\net9.0\ERPCompanySystem.MvcApplicationPartsAssemblyInfo.cs
 C:\Users\ahmed\Desktop\ERPCompanySystem\ERPCompanySystem\obj\Debug\net9.0\ERPCompanySystem.MvcApplicationPartsAssemblyInfo.cache
 C:\Users\ahmed\Desktop\ERPCompanySystem\ERPCompanySystem\obj\Debug\net9.0\ERPCompanySystem.sourcelink.json
+C:\Users\ahmed\Desktop\ERPCompanySystem\ERPCompanySystem\obj\Debug\net9.0\ERPCompanySystem.RazorAssemblyInfo.cache
+C:\Users\ahmed\Desktop\ERPCompanySystem\ERPCompanySystem\obj\Debug\net9.0\ERPCompanySystem.RazorAssemblyInfo.cs

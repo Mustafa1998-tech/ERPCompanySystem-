@@ -124,7 +124,6 @@ namespace ERPCompanySystem.Controllers
                 return StatusCode(500, new { message = "خطأ في النظام" });
             }
         }
-        }
 
         private (string, string) GenerateTokens(User user)
         {
